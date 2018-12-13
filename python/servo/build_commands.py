@@ -490,11 +490,11 @@ class MachCommands(CommandBase):
 
             # A random collection of search paths
             env.setdefault("STLPORT_LIBS", " ".join([
-                "-L" + path.join(env["MAGICLEAP_SDK"], "lumin", "stl", "libc++-lumin", "lib"),
+                "-L" + path.join(env["MAGICLEAP_SDK"], "lumin", "stl", "libc++", "lib"),
                 "-lc++"
             ]))
             env.setdefault("STLPORT_CPPFLAGS", " ".join([
-                "-I" + path.join(env["MAGICLEAP_SDK"], "lumin", "stl", "libc++-lumin", "include")
+                "-I" + path.join(env["MAGICLEAP_SDK"], "lumin", "stl", "libc++", "include")
             ]))
             env.setdefault("CPPFLAGS", " ".join([
                 "--no-standard-includes",

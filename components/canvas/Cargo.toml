@@ -30,5 +30,5 @@ offscreen_gl_context = {version = "0.21", features = ["serde", "osmesa"]}
 pixels = {path = "../pixels"}
 serde_bytes = "0.10"
 servo_config = {path = "../config"}
-webrender = {git = "https://github.com/servo/webrender"}
-webrender_api = {git = "https://github.com/servo/webrender", features = ["ipc"]}
+webrender = {git = "https://github.com/modulesio/webrender"}
+webrender_api = {git = "https://github.com/modulesio/webrender", features = ["ipc"]}

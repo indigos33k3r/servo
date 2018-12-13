@@ -19,4 +19,4 @@ msg = {path = "../../../components/msg"}
 profile_traits = {path = "../../../components/profile_traits"}
 servo_url = {path = "../../../components/url"}
 time = "0.1.12"
-webrender_api = {git = "https://github.com/servo/webrender"}
+webrender_api = {git = "https://github.com/modulesio/webrender"}

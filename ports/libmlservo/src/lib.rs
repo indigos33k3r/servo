@@ -65,6 +65,9 @@ pub struct MLLogger(extern "C" fn(MLLogLevel, *const c_char));
 pub struct MLHistoryUpdate(extern "C" fn(MLApp, bool, *const c_char, bool));
 
 #[repr(transparent)]
+pub struct MLPresentUpdate(extern "C" fn(MLApp));
+
+#[repr(transparent)]
 #[derive(Clone, Copy)]
 pub struct MLApp(*mut c_void);
 
@@ -78,6 +81,7 @@ pub unsafe extern "C" fn init_servo(
     app: MLApp,
     logger: MLLogger,
     history_update: MLHistoryUpdate,
+    present_update: MLPresentUpdate,
     url: *const c_char,
     width: u32,
     height: u32,
@@ -101,6 +105,8 @@ pub unsafe extern "C" fn init_servo(
         width: width,
         height: height,
         hidpi: hidpi,
+        app: app,
+        present_update: present_update,
     });
 
     info!("Starting servo");
@@ -366,6 +372,8 @@ struct WindowInstance {
     width: u32,
     height: u32,
     hidpi: f32,
+    app: MLApp,
+    present_update: MLPresentUpdate,
 }
 
 #[derive(Clone, Copy)]
@@ -378,6 +386,7 @@ enum ScrollState {
 impl WindowMethods for WindowInstance {
     fn present(&self) {
         SwapBuffers(self.disp, self.surf);
+        (self.present_update.0)(self.app);
     }
 
     fn prepare_for_composite(&self) -> bool {

@@ -51,6 +51,11 @@ pub use style_traits;
 pub use webrender_api;
 pub use webvr;
 pub use webvr_traits;
+use msg::constellation_msg::{BrowsingContextId};
+use script_traits::{WebDriverCommandMsg};
+use script_traits::webdriver_msg::{WebDriverScriptCommand, WebDriverJSResult};
+// pub use keyboard_types;
+// pub use winit;
 
 #[cfg(feature = "webdriver")]
 fn webdriver(port: u16, constellation: Sender<ConstellationMsg>) {
@@ -373,6 +378,29 @@ where
                 if let Err(e) = self.constellation_chan.send(msg) {
                     warn!(
                         "Sending SendError message to constellation failed ({:?}).",
+                        e
+                    );
+                }
+            },
+
+            WindowEvent::WebDriverCommand(top_level_browsing_context_id, script_string) => {
+                let (sender, receiver) = ipc::channel::<WebDriverJSResult>().unwrap();
+                let script_command = WebDriverScriptCommand::ExecuteScript(script_string, sender);
+                let command_msg = WebDriverCommandMsg::ScriptCommand(BrowsingContextId::from(top_level_browsing_context_id), script_command);
+                let msg = ConstellationMsg::WebDriverCommand(command_msg);
+                if let Err(e) = self.constellation_chan.send(msg) {
+                    warn!(
+                        "Sending WebDriverCommand message to constellation failed ({:?}).",
+                        e
+                    );
+                }
+            },
+
+            WindowEvent::PostMessage(top_level_browsing_context_id, e) => {
+                let msg = ConstellationMsg::PostMessage(top_level_browsing_context_id, e);
+                if let Err(e) = self.constellation_chan.send(msg) {
+                    warn!(
+                        "Sending PostMessage message to constellation failed ({:?}).",
                         e
                     );
                 }

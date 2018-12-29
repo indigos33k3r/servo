@@ -758,6 +758,8 @@ pub enum ConstellationMsg {
     ForwardEvent(PipelineId, CompositorEvent),
     /// Requesting a change to the onscreen cursor.
     SetCursor(CursorKind),
+    /// Dispatch window PostMessage
+    PostMessage(TopLevelBrowsingContextId, Vec<u8>),
 }
 
 impl fmt::Debug for ConstellationMsg {
@@ -784,6 +786,7 @@ impl fmt::Debug for ConstellationMsg {
             SelectBrowser(..) => "SelectBrowser",
             ForwardEvent(..) => "ForwardEvent",
             SetCursor(..) => "SetCursor",
+            PostMessage(..) => "PostMessage",
         };
         write!(formatter, "ConstellationMsg::{}", variant)
     }

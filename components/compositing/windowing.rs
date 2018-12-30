@@ -10,7 +10,7 @@ use euclid::TypedScale;
 use gleam::gl;
 use keyboard_types::KeyboardEvent;
 use msg::constellation_msg::{TopLevelBrowsingContextId, TraversalDirection};
-use script_traits::{MouseButton, TouchEventType, TouchId, WebDriverCommandMsg};
+use script_traits::{MouseButton, TouchEventType, TouchId};
 use servo_geometry::DeviceIndependentPixel;
 use servo_url::ServoUrl;
 use std::fmt::{Debug, Error, Formatter};

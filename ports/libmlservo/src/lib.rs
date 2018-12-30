@@ -59,7 +59,7 @@ pub enum MLLogLevel {
 }
 
 #[repr(transparent)]
-pub struct MLLogger(extern "C" fn(MLLogLevel, *const c_char));
+pub struct MLLogger(extern "C" fn(MLApp, MLLogLevel, *const c_char, usize));
 
 #[repr(transparent)]
 pub struct MLHistoryUpdate(extern "C" fn(MLApp, bool, *const c_char, bool));
@@ -89,7 +89,11 @@ pub unsafe extern "C" fn init_servo(
 ) -> *mut ServoInstance {
     // Servo initialization goes here!
     servo::embedder_traits::resources::set(Box::new(ResourceReaderInstance::new()));
-    let _ = log::set_boxed_logger(Box::new(logger));
+    let logger_wrap = MLLoggerWrap{
+      boxed_app: app,
+      boxed_logger: logger,
+    };
+    let _ = log::set_boxed_logger(Box::new(logger_wrap));
     log::set_max_level(LOG_LEVEL);
     let gl = GlesFns::load_with(|symbol| {
         let cstr = CString::new(symbol).expect("Failed to convert GL symbol to a char*");
@@ -479,7 +483,15 @@ impl ResourceReaderMethods for ResourceReaderInstance {
     }
 }
 
-impl log::Log for MLLogger {
+struct MLLoggerWrap {
+  boxed_app: MLApp,
+  boxed_logger: MLLogger,
+}
+
+unsafe impl Send for MLLoggerWrap {}
+unsafe impl Sync for MLLoggerWrap {}
+
+impl log::Log for MLLoggerWrap {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
         metadata.level() <= LOG_LEVEL
     }
@@ -494,7 +506,7 @@ impl log::Log for MLLogger {
         };
         let mut msg = SmallVec::<[u8; 128]>::new();
         write!(msg, "{}\0", record.args());
-        (self.0)(lvl, &msg[0] as *const _ as *const _);
+        (self.boxed_logger.0)(self.boxed_app, lvl, &msg[0] as *const _ as *const _, msg.len());
     }
 
     fn flush(&self) {}

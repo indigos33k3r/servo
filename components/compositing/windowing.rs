@@ -10,7 +10,7 @@ use euclid::TypedScale;
 use gleam::gl;
 use keyboard_types::KeyboardEvent;
 use msg::constellation_msg::{TopLevelBrowsingContextId, TraversalDirection};
-use script_traits::{MouseButton, TouchEventType, TouchId};
+use script_traits::{MouseButton, TouchEventType, TouchId, WebDriverCommandMsg};
 use servo_geometry::DeviceIndependentPixel;
 use servo_url::ServoUrl;
 use std::fmt::{Debug, Error, Formatter};
@@ -87,6 +87,8 @@ pub enum WindowEvent {
     ToggleWebRenderDebug(WebRenderDebugOption),
     /// Capture current WebRender
     CaptureWebRender,
+    /// Execute script via web driver
+    WebDriverCommand(TopLevelBrowsingContextId, String),
 }
 
 impl Debug for WindowEvent {
@@ -113,6 +115,7 @@ impl Debug for WindowEvent {
             WindowEvent::SelectBrowser(..) => write!(f, "SelectBrowser"),
             WindowEvent::ToggleWebRenderDebug(..) => write!(f, "ToggleWebRenderDebug"),
             WindowEvent::CaptureWebRender => write!(f, "CaptureWebRender"),
+            WindowEvent::WebDriverCommand(..) => write!(f, "WebDriverCommand"),
         }
     }
 }

@@ -487,6 +487,20 @@ pub unsafe extern "C" fn keyboard_servo(servo: *mut ServoInstance, keycode: u32,
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn executejs_servo(servo: *mut ServoInstance, data: *const u8, length: usize) {
+    if let Some(servo) = servo.as_mut() {
+        let mut data_vec : Vec<u8> = Vec::with_capacity(length);
+        data_vec.set_len(length);
+        ptr::copy(data, data_vec.as_mut_ptr(), length);
+
+        let script_string : String = String::from_utf8(data_vec).unwrap();
+
+        let window_events = vec![WindowEvent::WebDriverCommand(servo.browser_id, script_string)];
+        servo.servo.handle_events(window_events);
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn traverse_servo(servo: *mut ServoInstance, delta: i32) {
     // Traverse the session history
     if let Some(servo) = servo.as_mut() {

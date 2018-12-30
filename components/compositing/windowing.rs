@@ -89,6 +89,8 @@ pub enum WindowEvent {
     CaptureWebRender,
     /// Execute script via web driver
     WebDriverCommand(TopLevelBrowsingContextId, String),
+    /// Post message to window
+    PostMessage(TopLevelBrowsingContextId, Vec<u8>),
 }
 
 impl Debug for WindowEvent {
@@ -116,6 +118,7 @@ impl Debug for WindowEvent {
             WindowEvent::ToggleWebRenderDebug(..) => write!(f, "ToggleWebRenderDebug"),
             WindowEvent::CaptureWebRender => write!(f, "CaptureWebRender"),
             WindowEvent::WebDriverCommand(..) => write!(f, "WebDriverCommand"),
+            WindowEvent::PostMessage(..) => write!(f, "PostMessage"),
         }
     }
 }

@@ -394,6 +394,15 @@ where
                 }
             },
 
+            WindowEvent::PostMessage(top_level_browsing_context_id, e) => {
+                let msg = ConstellationMsg::PostMessage(top_level_browsing_context_id, e);
+                if let Err(e) = self.constellation_chan.send(msg) {
+                    warn!(
+                        "Sending PostMessage message to constellation failed ({:?}).",
+                        e
+                    );
+                }
+            },
         }
     }
 

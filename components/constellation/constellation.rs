@@ -1125,6 +1125,11 @@ where
                 self.forward_event(destination_pipeline_id, event);
             },
             FromCompositorMsg::SetCursor(cursor) => self.handle_set_cursor_msg(cursor),
+            FromCompositorMsg::PostMessage(top_level_browsing_context_id, data) => self.handle_post_message_msg(
+                BrowsingContextId::from(top_level_browsing_context_id),
+                None,
+                data
+            ),
         }
     }
 

@@ -501,6 +501,18 @@ pub unsafe extern "C" fn executejs_servo(servo: *mut ServoInstance, data: *const
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn postmessage_servo(servo: *mut ServoInstance, data: *const u8, length: usize) {
+    if let Some(servo) = servo.as_mut() {
+        let mut data_vec : Vec<u8> = Vec::with_capacity(length);
+        data_vec.set_len(length);
+        ptr::copy(data, data_vec.as_mut_ptr(), length);
+
+        let window_events = vec![WindowEvent::PostMessage(servo.browser_id, data_vec)];
+        servo.servo.handle_events(window_events);
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn traverse_servo(servo: *mut ServoInstance, delta: i32) {
     // Traverse the session history
     if let Some(servo) = servo.as_mut() {

@@ -17,4 +17,4 @@ libservo = { path = "../../components/servo" }
 log = "0.4"
 servo-egl = "0.2"
 smallvec = "0.6"
-
+keyboard-types = "0.4.3"

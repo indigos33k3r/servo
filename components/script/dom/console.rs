@@ -8,12 +8,17 @@ use crate::dom::globalscope::GlobalScope;
 use crate::dom::workerglobalscope::WorkerGlobalScope;
 use devtools_traits::{ConsoleMessage, LogLevel, ScriptToDevtoolsControlMsg};
 use std::io;
+use embedder_traits::{EmbedderMsg};
+use script_traits::{ScriptMsg};
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Console
 pub struct Console(());
 
 impl Console {
     fn send_to_devtools(global: &GlobalScope, level: LogLevel, message: DOMString) {
+        let msg : EmbedderMsg = EmbedderMsg::Console(message.to_string());
+        global.script_to_constellation_chan().send(ScriptMsg::ForwardToEmbedder(msg));
+
         if let Some(chan) = global.devtools_chan() {
             let console_message = prepare_message(level, message);
             let worker_id = global

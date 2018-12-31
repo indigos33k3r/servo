@@ -48,7 +48,7 @@ impl Console {
     pub fn Log(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Log, message);
             }
         })
@@ -58,7 +58,7 @@ impl Console {
     pub fn Debug(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Debug, message);
             }
         })
@@ -68,7 +68,7 @@ impl Console {
     pub fn Info(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Info, message);
             }
         })
@@ -78,7 +78,7 @@ impl Console {
     pub fn Warn(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Warn, message);
             }
         })
@@ -88,7 +88,7 @@ impl Console {
     pub fn Error(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Error, message);
             }
         })
@@ -99,7 +99,7 @@ impl Console {
         with_stderr_lock(move || {
             if !condition {
                 let message = message.unwrap_or_else(|| DOMString::from("no message"));
-                println!("Assertion failed: {}", message);
+                // println!("Assertion failed: {}", message);
                 Self::send_to_devtools(global, LogLevel::Error, message);
             }
         })
@@ -110,7 +110,7 @@ impl Console {
         with_stderr_lock(move || {
             if let Ok(()) = global.time(label.clone()) {
                 let message = DOMString::from(format!("{}: timer started", label));
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Log, message);
             }
         })
@@ -121,7 +121,7 @@ impl Console {
         with_stderr_lock(move || {
             if let Ok(delta) = global.time_end(&label) {
                 let message = DOMString::from(format!("{}: {}ms", label, delta));
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Log, message);
             };
         })

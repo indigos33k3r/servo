@@ -289,6 +289,7 @@ pub unsafe extern "C" fn init_servo(
     let result = Box::new(ServoInstance {
         app: app,
         browser_id: browser_id,
+        logger: logger,
         history_update: history_update,
         scroll_state: ScrollState::TriggerUp,
         scroll_scale: TypedScale::new(SCROLL_SCALE / hidpi),
@@ -335,6 +336,9 @@ pub unsafe extern "C" fn heartbeat_servo(servo: *mut ServoInstance) {
                             );
                         }
                     }
+                },
+                EmbedderMsg::Console(msg) => {
+                    (servo.logger.0)(servo.app, MLLogLevel::Info, &msg[0] as *const _ as *const _, msg.len());
                 },
                 // Ignore most messages for now
                 EmbedderMsg::ChangePageTitle(..) |
@@ -566,6 +570,7 @@ pub unsafe extern "C" fn discard_servo(servo: *mut ServoInstance) {
 pub struct ServoInstance {
     app: MLApp,
     browser_id: BrowserId,
+    logger: MLLogger,
     history_update: MLHistoryUpdate,
     servo: Servo<WindowInstance>,
     scroll_state: ScrollState,

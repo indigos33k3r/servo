@@ -223,6 +223,7 @@ pub enum MLLogLevel {
 }
 
 #[repr(transparent)]
+#[derive(Clone, Copy)]
 pub struct MLLogger(extern "C" fn(MLApp, MLLogLevel, *const c_char, usize));
 
 #[repr(transparent)]

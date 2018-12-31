@@ -118,7 +118,7 @@ pub enum EmbedderMsg {
     /// Servo has shut down
     Shutdown,
     /// Console log
-    Console(String),
+    Console(Vec<u8>),
 }
 
 impl Debug for EmbedderMsg {

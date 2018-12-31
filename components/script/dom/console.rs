@@ -16,7 +16,8 @@ pub struct Console(());
 
 impl Console {
     fn send_to_devtools(global: &GlobalScope, level: LogLevel, message: DOMString) {
-        let msg : EmbedderMsg = EmbedderMsg::Console(message.to_string());
+        let m : Vec<u8> = message.clone().into();
+        let msg : EmbedderMsg = EmbedderMsg::Console(m);
         global.script_to_constellation_chan().send(ScriptMsg::ForwardToEmbedder(msg));
 
         if let Some(chan) = global.devtools_chan() {

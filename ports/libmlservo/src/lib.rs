@@ -710,7 +710,7 @@ impl log::Log for MLLoggerWrap {
         };
         let mut msg = SmallVec::<[u8; 128]>::new();
         write!(msg, "{}\0", record.args());
-        (self.boxed_logger.0)(self.boxed_app, lvl, &msg[0] as *const _ as *const _, msg.len());
+        (self.boxed_logger.0)(self.boxed_app, lvl, &msg[0] as *const _ as *const _, msg.len() - 1);
     }
 
     fn flush(&self) {}

@@ -117,6 +117,8 @@ pub enum EmbedderMsg {
     HideIME,
     /// Servo has shut down
     Shutdown,
+    /// Console log
+    Console(String),
 }
 
 impl Debug for EmbedderMsg {
@@ -146,6 +148,7 @@ impl Debug for EmbedderMsg {
             EmbedderMsg::Shutdown => write!(f, "Shutdown"),
             EmbedderMsg::AllowOpeningBrowser(..) => write!(f, "AllowOpeningBrowser"),
             EmbedderMsg::BrowserCreated(..) => write!(f, "BrowserCreated"),
+            EmbedderMsg::Console(..) => write!(f, "Console"),
         }
     }
 }

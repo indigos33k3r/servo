@@ -87,6 +87,8 @@ pub enum WindowEvent {
     ToggleWebRenderDebug(WebRenderDebugOption),
     /// Capture current WebRender
     CaptureWebRender,
+    /// Execute script via web driver
+    WebDriverCommand(TopLevelBrowsingContextId, String),
 }
 
 impl Debug for WindowEvent {
@@ -113,6 +115,7 @@ impl Debug for WindowEvent {
             WindowEvent::SelectBrowser(..) => write!(f, "SelectBrowser"),
             WindowEvent::ToggleWebRenderDebug(..) => write!(f, "ToggleWebRenderDebug"),
             WindowEvent::CaptureWebRender => write!(f, "CaptureWebRender"),
+            WindowEvent::WebDriverCommand(..) => write!(f, "WebDriverCommand"),
         }
     }
 }

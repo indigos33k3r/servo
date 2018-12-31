@@ -47,6 +47,170 @@ use std::rc::Rc;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
+use std::ptr;
+use keyboard_types::{Code, Key, KeyboardEvent, KeyState, Modifiers, Location};
+
+fn get_servo_code_from_keycode(keycode: u32) -> Code {
+    use keyboard_types::Code::*;
+
+    match keycode {
+        48 => Digit0,
+        49 => Digit1,
+        50 => Digit2,
+        51 => Digit3,
+        52 => Digit4,
+        53 => Digit5,
+        54 => Digit6,
+        55 => Digit7,
+        56 => Digit8,
+        57 => Digit9,
+        65 => KeyA,
+        66 => KeyB,
+        67 => KeyC,
+        68 => KeyD,
+        69 => KeyE,
+        70 => KeyF,
+        71 => KeyG,
+        72 => KeyH,
+        73 => KeyI,
+        74 => KeyJ,
+        75 => KeyK,
+        76 => KeyL,
+        77 => KeyM,
+        78 => KeyN,
+        79 => KeyO,
+        80 => KeyP,
+        81 => KeyQ,
+        82 => KeyR,
+        83 => KeyS,
+        84 => KeyT,
+        85 => KeyU,
+        86 => KeyV,
+        87 => KeyW,
+        88 => KeyX,
+        89 => KeyY,
+        90 => KeyZ,
+        27 => Escape,
+        112 => F1,
+        113 => F2,
+        114 => F3,
+        115 => F4,
+        116 => F5,
+        117 => F6,
+        118 => F7,
+        119 => F8,
+        120 => F9,
+        121 => F10,
+        122 => F11,
+        123 => F12,
+        37 => ArrowLeft,
+        38 => ArrowUp,
+        39 => ArrowRight,
+        40 => ArrowDown,
+        13 => Enter,
+        32 => Space,
+        9 => Tab,
+        8 => Backspace,
+        20 => CapsLock,
+        192 => Backquote,
+        189 => Minus,
+        187 => Equal,
+        219 => BracketLeft,
+        221 => BracketRight,
+        220 => Backslash,
+        186 => Semicolon,
+        222 => Quote,
+        188 => Comma,
+        190 => Period,
+        191 => Slash,
+        16 => ShiftLeft,
+        17 => ControlLeft,
+        18 => AltLeft,
+        91 => MetaLeft,
+        _ => Unidentified,
+    }
+}
+
+fn get_servo_key_from_keycode(keycode: u32) -> Key {
+    // use winit::VirtualKeyCode::*;
+
+    match keycode {
+        /* 48 => Digit0,
+        49 => Digit1,
+        50 => Digit2,
+        51 => Digit3,
+        52 => Digit4,
+        53 => Digit5,
+        54 => Digit6,
+        55 => Digit7,
+        56 => Digit8,
+        57 => Digit9,
+        65 => KeyA,
+        66 => KeyB,
+        67 => KeyC,
+        68 => KeyD,
+        69 => KeyE,
+        70 => KeyF,
+        71 => KeyG,
+        72 => KeyH,
+        73 => KeyI,
+        74 => KeyJ,
+        75 => KeyK,
+        76 => KeyL,
+        77 => KeyM,
+        78 => KeyN,
+        79 => KeyO,
+        80 => KeyP,
+        81 => KeyQ,
+        82 => KeyR,
+        83 => KeyS,
+        84 => KeyT,
+        85 => KeyU,
+        86 => KeyV,
+        87 => KeyW,
+        88 => KeyX,
+        89 => KeyY,
+        90 => KeyZ, */
+        27 => Key::Escape,
+        112 => Key::F1,
+        113 => Key::F2,
+        114 => Key::F3,
+        115 => Key::F4,
+        116 => Key::F5,
+        117 => Key::F6,
+        118 => Key::F7,
+        119 => Key::F8,
+        120 => Key::F9,
+        121 => Key::F10,
+        122 => Key::F11,
+        123 => Key::F12,
+        37 => Key::ArrowLeft,
+        38 => Key::ArrowUp,
+        39 => Key::ArrowRight,
+        40 => Key::ArrowDown,
+        13 => Key::Enter,
+        // 32 => Space,
+        9 => Key::Tab,
+        8 => Key::Backspace,
+        20 => Key::CapsLock,
+        // 192 => Grave,
+        // 189 => Subtract,
+        // 187 => Equals,
+        // 219 => BracketLeft,
+        // 221 => BracketRight,
+        // 220 => Backslash,
+        // 186 => Semicolon,
+        // 222 => Apostrophe,
+        // 188 => Comma,
+        // 190 => Period,
+        // 191 => Slash,
+        16 => Key::Shift,
+        17 => Key::Control,
+        18 => Key::Alt,
+        91 => Key::Meta,
+        _ => Key::Unidentified,
+    }
+}
 
 #[repr(u32)]
 pub enum MLLogLevel {
@@ -59,7 +223,7 @@ pub enum MLLogLevel {
 }
 
 #[repr(transparent)]
-pub struct MLLogger(extern "C" fn(MLLogLevel, *const c_char));
+pub struct MLLogger(extern "C" fn(MLApp, MLLogLevel, *const c_char, usize));
 
 #[repr(transparent)]
 pub struct MLHistoryUpdate(extern "C" fn(MLApp, bool, *const c_char, bool));
@@ -89,7 +253,11 @@ pub unsafe extern "C" fn init_servo(
 ) -> *mut ServoInstance {
     // Servo initialization goes here!
     servo::embedder_traits::resources::set(Box::new(ResourceReaderInstance::new()));
-    let _ = log::set_boxed_logger(Box::new(logger));
+    let logger_wrap = MLLoggerWrap{
+      boxed_app: app,
+      boxed_logger: logger,
+    };
+    let _ = log::set_boxed_logger(Box::new(logger_wrap));
     log::set_max_level(LOG_LEVEL);
     let gl = GlesFns::load_with(|symbol| {
         let cstr = CString::new(symbol).expect("Failed to convert GL symbol to a char*");
@@ -293,6 +461,46 @@ pub unsafe extern "C" fn trigger_servo(servo: *mut ServoInstance, x: f32, y: f32
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn keyboard_servo(servo: *mut ServoInstance, keycode: u32, shift: bool, ctrl: bool, alt: bool, logo: bool, down: bool) {
+    if let Some(servo) = servo.as_mut() {
+        let mut modifiers = Modifiers::empty();
+        modifiers.set(Modifiers::CONTROL, ctrl);
+        modifiers.set(Modifiers::SHIFT, shift);
+        modifiers.set(Modifiers::ALT, alt);
+        modifiers.set(Modifiers::META, logo);
+
+        let keyboard_event : KeyboardEvent = KeyboardEvent{
+            state: match down {
+                true => KeyState::Down,
+                false => KeyState::Up,
+            },
+            key: get_servo_key_from_keycode(keycode),
+            code: get_servo_code_from_keycode(keycode),
+            location: Location::Standard,
+            modifiers,
+            repeat: false,
+            is_composing: false,
+        };
+        let window_events = vec![WindowEvent::Keyboard(keyboard_event)];
+        servo.servo.handle_events(window_events);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn executejs_servo(servo: *mut ServoInstance, data: *const u8, length: usize) {
+    if let Some(servo) = servo.as_mut() {
+        let mut data_vec : Vec<u8> = Vec::with_capacity(length);
+        data_vec.set_len(length);
+        ptr::copy(data, data_vec.as_mut_ptr(), length);
+
+        let script_string : String = String::from_utf8(data_vec).unwrap();
+
+        let window_events = vec![WindowEvent::WebDriverCommand(servo.browser_id, script_string)];
+        servo.servo.handle_events(window_events);
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn traverse_servo(servo: *mut ServoInstance, delta: i32) {
     // Traverse the session history
     if let Some(servo) = servo.as_mut() {
@@ -479,7 +687,15 @@ impl ResourceReaderMethods for ResourceReaderInstance {
     }
 }
 
-impl log::Log for MLLogger {
+struct MLLoggerWrap {
+  boxed_app: MLApp,
+  boxed_logger: MLLogger,
+}
+
+unsafe impl Send for MLLoggerWrap {}
+unsafe impl Sync for MLLoggerWrap {}
+
+impl log::Log for MLLoggerWrap {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
         metadata.level() <= LOG_LEVEL
     }
@@ -494,7 +710,7 @@ impl log::Log for MLLogger {
         };
         let mut msg = SmallVec::<[u8; 128]>::new();
         write!(msg, "{}\0", record.args());
-        (self.0)(lvl, &msg[0] as *const _ as *const _);
+        (self.boxed_logger.0)(self.boxed_app, lvl, &msg[0] as *const _ as *const _, msg.len());
     }
 
     fn flush(&self) {}

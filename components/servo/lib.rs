@@ -435,6 +435,7 @@ where
         if self.compositor.receive_messages() {
             self.receive_messages();
         }
+        while self.webdriver_js_result_receiver.try_recv().is_ok() {} // drop messages
         for event in events {
             self.handle_window_event(event);
         }

@@ -81,7 +81,7 @@ use env_logger::Builder as EnvLoggerBuilder;
 #[cfg(all(not(target_os = "windows"), not(target_os = "ios")))]
 use gaol::sandbox::{ChildSandbox, ChildSandboxMethods};
 use gfx::font_cache_thread::FontCacheThread;
-use ipc_channel::ipc::{self, IpcSender};
+use ipc_channel::ipc::{self, IpcSender, IpcReceiver};
 use log::{Log, Metadata, Record};
 use msg::constellation_msg::{PipelineNamespace, PipelineNamespaceId};
 use net::resource_thread::new_resource_threads;
@@ -121,6 +121,8 @@ pub struct Servo<Window: WindowMethods + 'static> {
     constellation_chan: Sender<ConstellationMsg>,
     embedder_receiver: EmbedderReceiver,
     embedder_events: Vec<(Option<BrowserId>, EmbedderMsg)>,
+    webdriver_js_result_sender: IpcSender<WebDriverJSResult>,
+    webdriver_js_result_receiver: IpcReceiver<WebDriverJSResult>,
 }
 
 impl<Window> Servo<Window>
@@ -250,11 +252,15 @@ where
             },
         );
 
+        let (webdriver_js_result_sender, webdriver_js_result_receiver) = ipc::channel::<WebDriverJSResult>().unwrap();
+
         Servo {
             compositor: compositor,
             constellation_chan: constellation_chan,
             embedder_receiver: embedder_receiver,
             embedder_events: Vec::new(),
+            webdriver_js_result_sender,
+            webdriver_js_result_receiver,
         }
     }
 
@@ -382,8 +388,7 @@ where
             },
 
             WindowEvent::WebDriverCommand(top_level_browsing_context_id, script_string) => {
-                let (sender, receiver) = ipc::channel::<WebDriverJSResult>().unwrap();
-                let script_command = WebDriverScriptCommand::ExecuteScript(script_string, sender);
+                let script_command = WebDriverScriptCommand::ExecuteScript(script_string, self.webdriver_js_result_sender.clone());
                 let command_msg = WebDriverCommandMsg::ScriptCommand(BrowsingContextId::from(top_level_browsing_context_id), script_command);
                 let msg = ConstellationMsg::WebDriverCommand(command_msg);
                 if let Err(e) = self.constellation_chan.send(msg) {

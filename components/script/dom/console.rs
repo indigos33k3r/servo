@@ -8,12 +8,18 @@ use crate::dom::globalscope::GlobalScope;
 use crate::dom::workerglobalscope::WorkerGlobalScope;
 use devtools_traits::{ConsoleMessage, LogLevel, ScriptToDevtoolsControlMsg};
 use std::io;
+use embedder_traits::{EmbedderMsg};
+use script_traits::{ScriptMsg};
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Console
 pub struct Console(());
 
 impl Console {
     fn send_to_devtools(global: &GlobalScope, level: LogLevel, message: DOMString) {
+        let m : Vec<u8> = message.clone().into();
+        let msg : EmbedderMsg = EmbedderMsg::Console(m);
+        global.script_to_constellation_chan().send(ScriptMsg::ForwardToEmbedder(msg));
+
         if let Some(chan) = global.devtools_chan() {
             let console_message = prepare_message(level, message);
             let worker_id = global
@@ -48,7 +54,7 @@ impl Console {
     pub fn Log(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Log, message);
             }
         })
@@ -58,7 +64,7 @@ impl Console {
     pub fn Debug(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Debug, message);
             }
         })
@@ -68,7 +74,7 @@ impl Console {
     pub fn Info(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Info, message);
             }
         })
@@ -78,7 +84,7 @@ impl Console {
     pub fn Warn(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Warn, message);
             }
         })
@@ -88,7 +94,7 @@ impl Console {
     pub fn Error(global: &GlobalScope, messages: Vec<DOMString>) {
         with_stderr_lock(move || {
             for message in messages {
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Error, message);
             }
         })
@@ -99,7 +105,7 @@ impl Console {
         with_stderr_lock(move || {
             if !condition {
                 let message = message.unwrap_or_else(|| DOMString::from("no message"));
-                println!("Assertion failed: {}", message);
+                // println!("Assertion failed: {}", message);
                 Self::send_to_devtools(global, LogLevel::Error, message);
             }
         })
@@ -110,7 +116,7 @@ impl Console {
         with_stderr_lock(move || {
             if let Ok(()) = global.time(label.clone()) {
                 let message = DOMString::from(format!("{}: timer started", label));
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Log, message);
             }
         })
@@ -121,7 +127,7 @@ impl Console {
         with_stderr_lock(move || {
             if let Ok(delta) = global.time_end(&label) {
                 let message = DOMString::from(format!("{}: {}ms", label, delta));
-                println!("{}", message);
+                // println!("{}", message);
                 Self::send_to_devtools(global, LogLevel::Log, message);
             };
         })

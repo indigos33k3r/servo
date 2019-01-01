@@ -212,6 +212,9 @@ fn get_servo_key_from_keycode(keycode: u32) -> Key {
     }
 }
 
+#[repr(transparent)]
+pub struct MLLoad(extern "C" fn(MLApp));
+
 #[repr(u32)]
 pub enum MLLogLevel {
     Fatal = 0,
@@ -223,6 +226,7 @@ pub enum MLLogLevel {
 }
 
 #[repr(transparent)]
+#[derive(Clone, Copy)]
 pub struct MLLogger(extern "C" fn(MLApp, MLLogLevel, *const c_char, usize));
 
 #[repr(transparent)]
@@ -243,6 +247,7 @@ pub unsafe extern "C" fn init_servo(
     surf: EGLSurface,
     disp: EGLDisplay,
     app: MLApp,
+    load: MLLoad,
     logger: MLLogger,
     history_update: MLHistoryUpdate,
     present_update: MLPresentUpdate,
@@ -289,10 +294,13 @@ pub unsafe extern "C" fn init_servo(
     let result = Box::new(ServoInstance {
         app: app,
         browser_id: browser_id,
+        load: load,
+        logger: logger,
         history_update: history_update,
         scroll_state: ScrollState::TriggerUp,
         scroll_scale: TypedScale::new(SCROLL_SCALE / hidpi),
         servo: servo,
+        loaded: false,
     });
     Box::into_raw(result)
 }
@@ -336,6 +344,15 @@ pub unsafe extern "C" fn heartbeat_servo(servo: *mut ServoInstance) {
                         }
                     }
                 },
+                EmbedderMsg::Console(msg) => {
+                    (servo.logger.0)(servo.app, MLLogLevel::Info, &msg[0] as *const _ as *const _, msg.len());
+                },
+                EmbedderMsg::BrowserLoad(top_level_browsing_context_id) => {
+                    if !servo.loaded {
+                        (servo.load.0)(servo.app);
+                        servo.loaded = true;
+                    }
+                }
                 // Ignore most messages for now
                 EmbedderMsg::ChangePageTitle(..) |
                 EmbedderMsg::BrowserCreated(..) |
@@ -566,10 +583,13 @@ pub unsafe extern "C" fn discard_servo(servo: *mut ServoInstance) {
 pub struct ServoInstance {
     app: MLApp,
     browser_id: BrowserId,
+    load: MLLoad,
+    logger: MLLogger,
     history_update: MLHistoryUpdate,
     servo: Servo<WindowInstance>,
     scroll_state: ScrollState,
     scroll_scale: TypedScale<f32, DevicePixel, LayoutPixel>,
+    loaded: bool,
 }
 
 struct WindowInstance {
@@ -710,7 +730,7 @@ impl log::Log for MLLoggerWrap {
         };
         let mut msg = SmallVec::<[u8; 128]>::new();
         write!(msg, "{}\0", record.args());
-        (self.boxed_logger.0)(self.boxed_app, lvl, &msg[0] as *const _ as *const _, msg.len());
+        (self.boxed_logger.0)(self.boxed_app, lvl, &msg[0] as *const _ as *const _, msg.len() - 1);
     }
 
     fn flush(&self) {}

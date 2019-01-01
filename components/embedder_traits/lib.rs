@@ -117,6 +117,10 @@ pub enum EmbedderMsg {
     HideIME,
     /// Servo has shut down
     Shutdown,
+    /// Console log
+    Console(Vec<u8>),
+    /// A new browser emits onload
+    BrowserLoad(TopLevelBrowsingContextId),
 }
 
 impl Debug for EmbedderMsg {
@@ -146,6 +150,8 @@ impl Debug for EmbedderMsg {
             EmbedderMsg::Shutdown => write!(f, "Shutdown"),
             EmbedderMsg::AllowOpeningBrowser(..) => write!(f, "AllowOpeningBrowser"),
             EmbedderMsg::BrowserCreated(..) => write!(f, "BrowserCreated"),
+            EmbedderMsg::Console(..) => write!(f, "Console"),
+            EmbedderMsg::BrowserLoad(..) => write!(f, "BrowserLoad"),
         }
     }
 }

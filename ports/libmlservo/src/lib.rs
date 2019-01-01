@@ -212,6 +212,9 @@ fn get_servo_key_from_keycode(keycode: u32) -> Key {
     }
 }
 
+#[repr(transparent)]
+pub struct MLLoad(extern "C" fn(MLApp));
+
 #[repr(u32)]
 pub enum MLLogLevel {
     Fatal = 0,
@@ -244,6 +247,7 @@ pub unsafe extern "C" fn init_servo(
     surf: EGLSurface,
     disp: EGLDisplay,
     app: MLApp,
+    load: MLLoad,
     logger: MLLogger,
     history_update: MLHistoryUpdate,
     present_update: MLPresentUpdate,
@@ -290,6 +294,7 @@ pub unsafe extern "C" fn init_servo(
     let result = Box::new(ServoInstance {
         app: app,
         browser_id: browser_id,
+        load: load,
         logger: logger,
         history_update: history_update,
         scroll_state: ScrollState::TriggerUp,
@@ -341,6 +346,9 @@ pub unsafe extern "C" fn heartbeat_servo(servo: *mut ServoInstance) {
                 EmbedderMsg::Console(msg) => {
                     (servo.logger.0)(servo.app, MLLogLevel::Info, &msg[0] as *const _ as *const _, msg.len());
                 },
+                EmbedderMsg::BrowserLoad(top_level_browsing_context_id) => {
+                    (servo.load.0)(servo.app);
+                }
                 // Ignore most messages for now
                 EmbedderMsg::ChangePageTitle(..) |
                 EmbedderMsg::BrowserCreated(..) |
@@ -571,6 +579,7 @@ pub unsafe extern "C" fn discard_servo(servo: *mut ServoInstance) {
 pub struct ServoInstance {
     app: MLApp,
     browser_id: BrowserId,
+    load: MLLoad,
     logger: MLLogger,
     history_update: MLHistoryUpdate,
     servo: Servo<WindowInstance>,

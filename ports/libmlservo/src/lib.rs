@@ -300,6 +300,7 @@ pub unsafe extern "C" fn init_servo(
         scroll_state: ScrollState::TriggerUp,
         scroll_scale: TypedScale::new(SCROLL_SCALE / hidpi),
         servo: servo,
+        loaded: false,
     });
     Box::into_raw(result)
 }
@@ -347,7 +348,10 @@ pub unsafe extern "C" fn heartbeat_servo(servo: *mut ServoInstance) {
                     (servo.logger.0)(servo.app, MLLogLevel::Info, &msg[0] as *const _ as *const _, msg.len());
                 },
                 EmbedderMsg::BrowserLoad(top_level_browsing_context_id) => {
-                    (servo.load.0)(servo.app);
+                    if !servo.loaded {
+                        (servo.load.0)(servo.app);
+                        servo.loaded = true;
+                    }
                 }
                 // Ignore most messages for now
                 EmbedderMsg::ChangePageTitle(..) |
@@ -585,6 +589,7 @@ pub struct ServoInstance {
     servo: Servo<WindowInstance>,
     scroll_state: ScrollState,
     scroll_scale: TypedScale<f32, DevicePixel, LayoutPixel>,
+    loaded: bool,
 }
 
 struct WindowInstance {

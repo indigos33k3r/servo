@@ -910,6 +910,12 @@ where
                 parent.add_child(browsing_context_id);
             }
         }
+
+        let msg = (
+            Some(top_level_id),
+            EmbedderMsg::BrowserLoad(top_level_id),
+        );
+        self.embedder_proxy.send(msg);
     }
 
     fn add_pending_change(&mut self, change: SessionHistoryChange) {

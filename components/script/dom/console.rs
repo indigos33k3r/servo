@@ -18,7 +18,7 @@ impl Console {
     fn send_to_devtools(global: &GlobalScope, level: LogLevel, message: DOMString) {
         let m : Vec<u8> = message.clone().into();
         let msg : EmbedderMsg = EmbedderMsg::Console(m);
-        global.script_to_constellation_chan().send(ScriptMsg::ForwardToEmbedder(msg));
+        let _ = global.script_to_constellation_chan().send(ScriptMsg::ForwardToEmbedder(msg));
 
         if let Some(chan) = global.devtools_chan() {
             let console_message = prepare_message(level, message);

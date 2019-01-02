@@ -347,7 +347,7 @@ pub unsafe extern "C" fn heartbeat_servo(servo: *mut ServoInstance) {
                 EmbedderMsg::Console(msg) => {
                     (servo.logger.0)(servo.app, MLLogLevel::Info, &msg[0] as *const _ as *const _, msg.len());
                 },
-                EmbedderMsg::BrowserLoad(top_level_browsing_context_id) => {
+                EmbedderMsg::BrowserLoad(_top_level_browsing_context_id) => {
                     if !servo.loaded {
                         (servo.load.0)(servo.app);
                         servo.loaded = true;
